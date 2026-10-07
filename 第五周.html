@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>第五周：喜樂的心・幸福養分測驗</title>
+  <style>
+    :root {
+      --primary: #2d6a4f;
+      --primary-light: #d8f3dc;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #212529;
+    }
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .chat-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      text-align: center;
+      padding: 16px 0;
+      border-bottom: 2px solid var(--primary-light);
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 24px;
+      margin: 0;
+      color: var(--primary);
+    }
+    .header p {
+      font-size: 16px;
+      color: #6c757d;
+      margin-top: 6px;
+    }
+    .chat-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .message {
+      padding: 14px 18px;
+      border-radius: 18px;
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 90%;
+      animation: fadeIn 0.3s ease;
+    }
+    .bot-message {
+      background-color: var(--card-bg);
+      align-self: flex-start;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      color: var(--text);
+    }
+    .user-message {
+      background-color: var(--primary);
+      color: white;
+      align-self: flex-end;
+    }
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .option-btn {
+      background-color: #ffffff;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      padding: 14px 18px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .option-btn:hover, .option-btn:active {
+      background-color: var(--primary-light);
+    }
+    .result-card {
+      background-color: white;
+      border: 3px solid var(--primary);
+      border-radius: 20px;
+      padding: 24px 20px;
+      margin-top: 16px;
+      box-shadow: 0 4px 12px rgba(45,106,79,0.12);
+      animation: fadeIn 0.4s ease;
+    }
+    .result-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .keyword-badge {
+      display: inline-block;
+      background-color: #ffe8d6;
+      color: #b0572b;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 6px 16px;
+      border-radius: 30px;
+      margin: 8px 0;
+    }
+    .guide-box {
+      background-color: var(--primary-light);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="header">
+    <h1>🌱 幸福養分測驗</h1>
+    <p>找找屬於您的生命能量</p>
+  </div>
+
+  <div id="chatBox" class="chat-box"></div>
+</div>
+
+<script>
+  // 測驗題庫設計（對應生命樹養分）
+  const quizData = [
+    {
+      question: "阿姨、大哥您好！請想一想：在平常的日子裡，做什麼事情最容易讓您感到心情放鬆、打從心底微笑？",
+      options: [
+        { label: "🍵 泡一壺好茶、安靜聽音樂或吹微風", type: "peace" },
+        { label: "👨‍👩‍👧‍👦 跟家人孩子聚在一起吃頓家常飯", type: "family" },
+        { label: "🤝 跟老朋友見面泡茶、散步話家常", type: "friend" },
+        { label: "💪 靠自己克服難關、把家裡打理得井井有條", type: "brave" }
+      ]
+    },
+    {
+      question: "回想走過的大半輩子，您覺得支撐您一路平平安安走到今天，最重要的力量是什麼？",
+      options: [
+        { label: "🌻 總是看開、不計較的寬厚心胸", type: "peace" },
+        { label: "❤️ 家人彼此陪伴與牽掛的溫暖", type: "family" },
+        { label: "🌈 身邊互相打氣、不離不棄的知己好友", type: "friend" },
+        { label: "🧗 不服輸、有擔當、咬牙挺過來的毅力", type: "brave" }
+      ]
+    },
+    {
+      question: "如果今天要把一份最珍貴的心意，像禮物一樣送給未來的晚輩或自己，您最想送出什麼？",
+      options: [
+        { label: "🕊️ 凡事安然自得、知足常樂的寧靜心態", type: "peace" },
+        { label: "🏡 家和萬事興、常常互相擁抱關心", type: "family" },
+        { label: "🌟 真誠待人、廣結善緣的溫暖情誼", type: "friend" },
+        { label: "🛡️ 面對任何考驗都無所畏懼的勇氣", type: "brave" }
+      ]
+    }
+  ];
+
+  // 結果定義（幸福關鍵字、彩繪生命樹推薦元素與顏色）
+  const results = {
+    peace: {
+      keyword: "【知足・恬淡】",
+      desc: "您的內心有一汪清澈的泉水，懂得在平淡生活裡看見清幽與美好，這份心寬就是您最大的福氣！",
+      treeGuide: "🎨 <b>生命樹彩繪建議：</b><br>• <b>推薦顏色</b>：天空藍、嫩芽綠、米白<br>• <b>推薦繪畫元素</b>：在樹梢畫上『微風』、『祥雲』或一片片『舒展的綠葉』，代表心靈的寧靜與悠然自得。"
+    },
+    family: {
+      keyword: "【家人・深愛】",
+      desc: "家是您最溫暖的避風港，您的付出與慈愛深深滋養著每個人，這份牽絆是生命中最珍貴的寶藏！",
+      treeGuide: "🎨 <b>生命樹彩繪建議：</b><br>• <b>推薦顏色</b>：溫暖橘、大地棕、暖黃<br>• <b>推薦繪畫元素</b>：在樹幹與樹葉間畫上『愛心果實』、『溫暖的屋舍』或『盛開的大花朵』，代表代代相傳的親情滋養。"
+    },
+    friend: {
+      keyword: "【情誼・相伴】",
+      desc: "您是一位熱情溫暖的人，有好友相伴讓生活滿是歡笑與甘甜，同行者的支持讓歲月更添光彩！",
+      treeGuide: "🎨 <b>生命樹彩繪建議：</b><br>• <b>推薦顏色</b>：朝陽黃、粉紅、青翠綠<br>• <b>推薦繪畫元素</b>：在樹枝上畫上『成雙成對的小鳥』或『繽紛多彩的花叢』，象徵與身邊夥伴一同綻放的美好回憶。"
+    },
+    brave: {
+      keyword: "【勇敢・堅韌】",
+      desc: "您的生命歷程充滿了堅強與韌性！無論經歷多少風浪，您都有力量撐起一片天，令人敬佩！",
+      treeGuide: "🎨 <b>生命樹彩繪建議：</b><br>• <b>推薦顏色</b>：深褐、松柏深綠、璀璨金<br>• <b>推薦繪畫元素</b>：將『樹幹』畫得粗壯扎實，樹根深扎土壤，並在樹梢畫上『金色向日葵』，象徵克服萬難後的傲然力量。"
+    }
+  };
+
+  let currentStep = 0;
+  const scoreCounter = { peace: 0, family: 0, friend: 0, brave: 0 };
+  const chatBox = document.getElementById("chatBox");
+
+  function addBotMessage(text) {
+    const msg = document.createElement("div");
+    msg.className = "message bot-message";
+    msg.innerHTML = text;
+    chatBox.appendChild(msg);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function addUserMessage(text) {
+    const msg = document.createElement("div");
+    msg.className = "message user-message";
+    msg.innerText = text;
+    chatBox.appendChild(msg);
+  }
+
+  function showQuestion(step) {
+    const currentQ = quizData[step];
+    addBotMessage(currentQ.question);
+
+    const optionsDiv = document.createElement("div");
+    optionsDiv.className = "options-container";
+
+    currentQ.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerText = opt.label;
+      btn.onclick = () => handleChoice(opt, optionsDiv);
+      optionsDiv.appendChild(btn);
+    });
+
+    chatBox.appendChild(optionsDiv);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function handleChoice(opt, container) {
+    container.remove();
+    addUserMessage(opt.label);
+    scoreCounter[opt.type]++;
+    currentStep++;
+
+    if (currentStep < quizData.length) {
+      setTimeout(() => {
+        showQuestion(currentStep);
+      }, 400);
+    } else {
+      setTimeout(showFinalResult, 500);
+    }
+  }
+
+  function showFinalResult() {
+    let topType = "peace";
+    let maxScore = -1;
+    for (const type in scoreCounter) {
+      if (scoreCounter[type] > maxScore) {
+        maxScore = scoreCounter[type];
+        topType = type;
+      }
+    }
+    const finalData = results[topType];
+
+    const resultCard = document.createElement("div");
+    resultCard.className = "result-card";
+    resultCard.innerHTML = `
+      <div class="result-title">🌟 您的幸福養分分析結果 🌟</div>
+      <div style="text-align: center;">
+        <span class="keyword-badge">${finalData.keyword}</span>
+      </div>
+      <p style="font-size: 18px; line-height: 1.6; margin-top: 12px;">${finalData.desc}</p>
+      <div class="guide-box">
+        ${finalData.treeGuide}
+      </div>
+      <p style="text-align:center; color:#555; font-size:16px; margin-top:14px;">
+        👉 現在請把這個專屬顏色與元素，畫在您的<b>【幸福故事書】彩繪生命樹</b>上喔！
+      </p>
+    `;
+
+    chatBox.appendChild(resultCard);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  // 啟動測驗
+  showQuestion(0);
+</script>
+
+</body>
+</html>
